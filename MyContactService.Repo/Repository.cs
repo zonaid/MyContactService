@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Web;
 using StackExchange.Redis.Extensions;
 using StackExchange.Redis.Extensions.Core;
-using StackExchange.Redis.Extensions.Protobuf;
+using StackExchange.Redis.Extensions.Newtonsoft;
 using System.Data.Entity;
 using System.Threading.Tasks;
 
@@ -21,8 +21,8 @@ namespace MyContactService.Repo
         }
 
         public Repository(IDatabase database)
-        {           
-            var serializer = new ProtobufSerializer();
+        {
+            var serializer = new NewtonsoftSerializer();
             this.DBKey = typeof(T).FullName;
             this.client = new StackExchangeRedisCacheClient(database.Multiplexer, serializer);
         }
@@ -37,11 +37,8 @@ namespace MyContactService.Repo
         }
         public async Task<IEnumerable<T>> GetAllAsync()
         {
-            while(client.Database.IsConnected("ee"))
-            {
-                Console.Write(client.GetInfo().First().Value);
-            }
-            return await Task.Run(() =>  client.GetAll<T>(client.SearchKeys(DBKey)).Select(x => x.Value).AsEnumerable());
+            var all = client.GetAll<MyContactService.Repo.Models.Contact>(client.SearchKeys(string.Concat(DBKey, "*"))).ToList();
+            return await Task.Run(() => client.GetAll<T>(client.SearchKeys(string.Concat(DBKey, "*"))).Select(x => x.Value).AsEnumerable());
         }
 
         public bool Insert(string id, T entity)
@@ -72,7 +69,7 @@ namespace MyContactService.Repo
 
         public async Task<bool> InsertAsync(string id, T entity)
         {
-            return await client.SetAddAsync(string.Format("{0}:{1}", DBKey, id), entity);
+            return await client.AddAsync<T>(string.Format("{0}:{1}", DBKey, id), entity);
         }
 
         public async Task<bool> DeleteAsync(string id)
@@ -87,7 +84,7 @@ namespace MyContactService.Repo
 
         public async Task<bool> UpdateAsync(string id, T entity)
         {
-            return await client.ReplaceAsync(string.Format("{0}:{1}", DBKey, id), entity);
+            return await client.ReplaceAsync<T>(string.Format("{0}:{1}", DBKey, id), entity);
         }
 
         public async Task<bool> CommitAsync()
