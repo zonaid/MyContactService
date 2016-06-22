@@ -21,7 +21,7 @@ namespace MyContactService.Repo
         bool Update(string id, T entity);
         Task<bool> UpdateAsync(string id, T entity);
         bool Commit();
-        Task<bool> CommitAsync();
+        
 
     }
 }

@@ -52,10 +52,7 @@ namespace MyContactService.Controllers
         {
             if (ModelState.IsValid)
             {
-                await contactDb.InsertAsync(contact.ID, contact);
-                
-                //contactDb.Commit();
-                
+                await contactDb.InsertAsync(contact.ID, contact);              
                 return RedirectToAction("Index");
             }
 
@@ -116,8 +113,7 @@ namespace MyContactService.Controllers
             Contact contact = await contactDb.GetByIdAsync(id);
             if (contact != null)
             {
-                await contactDb.DeleteAsync(contact.ID);
-                await contactDb.CommitAsync();
+                await contactDb.DeleteAsync(contact.ID);                
             }
             return RedirectToAction("Index");
         }

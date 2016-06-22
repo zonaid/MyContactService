@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Web;
 using StackExchange.Redis.Extensions;
 using StackExchange.Redis.Extensions.Core;
-using StackExchange.Redis.Extensions.Newtonsoft;
+using StackExchange.Redis.Extensions.Protobuf;
 using System.Data.Entity;
 using System.Threading.Tasks;
 
@@ -22,7 +22,7 @@ namespace MyContactService.Repo
 
         public Repository(IDatabase database)
         {
-            var serializer = new NewtonsoftSerializer();
+            var serializer = new ProtobufSerializer();
             this.DBKey = typeof(T).FullName;
             this.client = new StackExchangeRedisCacheClient(database.Multiplexer, serializer);
         }
@@ -43,7 +43,7 @@ namespace MyContactService.Repo
 
         public bool Insert(string id, T entity)
         {
-            return client.SetAdd(string.Format("{0}:{1}", DBKey, id), entity);
+            return client.Add<T>(string.Format("{0}:{1}", DBKey, id), entity);
         }
 
         public bool Delete(string id)
@@ -85,12 +85,6 @@ namespace MyContactService.Repo
         public async Task<bool> UpdateAsync(string id, T entity)
         {
             return await client.ReplaceAsync<T>(string.Format("{0}:{1}", DBKey, id), entity);
-        }
-
-        public async Task<bool> CommitAsync()
-        {
-            client.SaveAsync(SaveType.BackgroundSave);
-            return await Task.Run(() => true);
         }
 
         #region IDisposable Support
